@@ -1,0 +1,72 @@
+#!/bin/sh
+# init psweb
+#
+# chkconfig: 2345 90 60
+# description: start/stop PeopleSoft WebLogic Server 
+# this script uses existing start/stop scripts included with WebLogic
+
+# 05/29/2014 ESAI -mmacdo02 (michael.macdonald@tufts.edu)
+
+# Define these variables
+#########################
+PSDOMAIN=FINDEV
+PSUSER=psfm
+#########################
+RETVAL=0
+
+. /etc/init.d/functions
+
+if [ $UID != 0 ]; then
+        echo This script must be run using sudo or as root.
+        exit 1
+fi
+
+
+psweb_start() {
+  echo Starting PSweb...
+  runuser -l $PSUSER -c "/$PSUSER/fm/webserv/$PSDOMAIN/bin/startPIA.sh"
+  RETVAL=$?
+  [ $RETVAL -eq 0 ] && touch /var/lock/subsys/psweb
+}
+
+psweb_stop() {
+  echo Stopping PSweb...
+  runuser -l $PSUSER -c "/$PSUSER/fm/webserv/$PSDOMAIN/bin/stopPIA.sh"
+  RETVAL=$?
+  [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/psweb
+}
+
+psweb_restart() {
+  echo Restarting PSweb..
+  runuser -l $PSUSER -c "/$PSUSER/fm/webserv/$PSDOMAIN/bin/stopPIA.sh"
+  runuser -l $PSUSER -c "/$PSUSER/fm/webserv/$PSDOMAIN/bin/startPIA.sh"
+  RETVAL=$?
+  [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/psweb
+}
+
+psweb_status() {
+  echo PSweb status:
+  runuser -l $PSUSER -c "/$PSUSER/fm/webserv/$PSDOMAIN/bin/singleserverStatus.sh"
+  RETVAL=$?
+}
+
+case "$1" in
+  start)
+    psweb_start
+    ;;
+  stop)
+    psweb_stop
+    ;;
+  restart)
+    psweb_restart
+    ;;
+  status)
+    psweb_status
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|status}"
+    exit 1
+    ;;
+esac
+
+exit $RETVAL

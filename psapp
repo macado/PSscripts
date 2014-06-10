@@ -1,0 +1,95 @@
+#!/bin/sh
+# init psapp
+#
+# chkconfig: 2345 90 60
+# description: start/stop PeopleSoft App Server
+# this script uses psadmin 
+# http://docs.oracle.com/cd/E38689_01/pt853pbr0/eng/pt/tsvt/task_UsingthePSADMINCommand-LineInterface-c07e70.html
+# http://peoplesoft.ittoolbox.com/groups/technical-functional/peoplesoft-other-l/auto-startup-script-for-peoplesoft-apps-server-process-schedular-and-pia-554662
+
+# 05/29/2014 ESAI -mmacdo02 (michael.macdonald@tufts.edu)
+
+# Define these variables
+#########################
+PSDOMAIN=FINDEV
+PSUSER=psfm
+#########################
+RETVAL=0
+
+. /etc/init.d/functions
+
+if [ $UID != 0 ]; then
+        echo This script must be run using sudo or as root.
+        exit 1
+fi
+
+psapp_start() {
+  echo Starting psapp...
+  runuser -l $PSUSER -c "/$PSUSER/fm/appserv/psadmin -c start -d $PSDOMAIN" 
+RETVAL=$?
+  [ $RETVAL -eq 0 ] && touch /var/lock/subsys/psapp
+}
+
+psapp_stop() {
+  echo Stopping psapp...
+  runuser -l $PSUSER -c "/$PSUSER/fm/appserv/psadmin -c stop -d $PSDOMAIN"
+RETVAL=$?
+  [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/psapp
+}
+
+psapp_restart() {
+  echo Restarting psapp..
+  psapp_stop
+  psapp_flushipc
+  psapp_clearcache
+  psapp_config
+  psapp_start
+  RETVAL=$?
+  [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/psapp
+}
+
+psapp_status() {
+  echo psapp server status:
+  runuser -l $PSUSER -c "/$PSUSER/fm/appserv/psadmin -c sstatus -d $PSDOMAIN"  
+  echo psapp client status:
+  runuser -l $PSUSER -c "/$PSUSER/fm/appserv/psadmin -c cstatus -d $PSDOMAIN"
+RETVAL=$?
+}
+
+psapp_config() {
+  echo Configuring psapp...
+  runuser -l $PSUSER -c "/$PSUSER/fm/appserv/psadmin -c configure -d $PSDOMAIN"
+}
+
+psapp_flushipc() {
+  echo Flushing IPC for psapp...
+  runuser -l $PSUSER -c "/$PSUSER/fm/appserv/psadmin -c cleanipc -d $PSDOMAIN"
+}
+
+psapp_clearcache() {
+  echo Clearing cache for psapp...
+  runuser -l $PSUSER -c "/$PSUSER/fm/appserv/psadmin -c purge -d $PSDOMAIN"
+}
+
+
+case "$1" in
+  start)
+    psapp_start
+    ;;
+  stop)
+    psapp_stop
+    ;;
+  restart)
+    psapp_restart
+    ;;
+  status)
+    psapp_status
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|status}"
+    exit 1
+    ;;
+esac
+
+exit $RETVAL
+
