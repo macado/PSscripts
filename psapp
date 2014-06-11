@@ -45,7 +45,7 @@ psapp_restart() {
   psapp_config
   psapp_start
   RETVAL=$?
-  [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/psapp
+  [ $RETVAL -eq 0 ] && touch /var/lock/subsys/psapp
 }
 
 psapp_status() {
