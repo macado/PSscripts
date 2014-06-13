@@ -43,7 +43,6 @@ psprcs_restart() {
   echo Restarting psprcs..
   psprcs_stop
   psprcs_flush
-  psprcs_configure
   psprcs_start
   RETVAL=$?
   [ $RETVAL -eq 0 ] && rm -f /var/lock/subsys/psprcs
