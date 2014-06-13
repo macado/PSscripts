@@ -42,7 +42,6 @@ psapp_restart() {
   psapp_stop
   psapp_flushipc
   psapp_clearcache
-  psapp_config
   psapp_start
   RETVAL=$?
   [ $RETVAL -eq 0 ] && touch /var/lock/subsys/psapp
